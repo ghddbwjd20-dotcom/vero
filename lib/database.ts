@@ -1,16 +1,33 @@
-import { Pool } from 'pg'
+import { Pool, type PoolConfig } from 'pg'
 
-// PostgreSQL 연결 풀 생성
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'vero',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '1234',
-  max: 20, // 최대 연결 수
-  idleTimeoutMillis: 30000, // 유휴 연결 타임아웃
-  connectionTimeoutMillis: 2000, // 연결 타임아웃
-})
+const poolDefaults = {
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+} as const
+
+function createPoolConfig(): PoolConfig {
+  const databaseUrl = process.env.DATABASE_URL?.trim()
+  if (databaseUrl) {
+    return {
+      ...poolDefaults,
+      connectionString: databaseUrl,
+      ssl: { rejectUnauthorized: true },
+    }
+  }
+
+  return {
+    ...poolDefaults,
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432', 10),
+    database: process.env.DB_NAME || 'vero',
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || '1234',
+  }
+}
+
+// PostgreSQL 연결 풀 생성 (DATABASE_URL 우선, 없으면 DB_HOST 등 개별 변수)
+const pool = new Pool(createPoolConfig())
 
 // 연결 풀 이벤트 리스너
 pool.on('connect', () => {

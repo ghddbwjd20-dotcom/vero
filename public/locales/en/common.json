@@ -1,0 +1,44 @@
+{
+  "navigation": {
+    "services": "Services",
+    "process": "Process",
+    "portfolio": "Portfolio",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "contact": "Contact"
+  },
+  "hero": {
+    "title": "Designing Trust with Authenticity",
+    "subtitle": "We build lasting trust rather than momentary glamour. VERO proposes clean yet sophisticated web design focused on essence.",
+    "cta1": "Start Project",
+    "cta2": "View Portfolio"
+  },
+  "bento": {
+    "professionalism": {
+      "title": "Professionalism",
+      "description": "We transparently explain and take responsibility for the entire process from planning to security."
+    },
+    "transparency": {
+      "title": "Transparent Communication",
+      "description": "We share progress through weekly reports."
+    },
+    "quality": {
+      "title": "Quality Assurance",
+      "description": "We provide 30 days of free quality assurance."
+    }
+  },
+  "footer": {
+    "company": "Company",
+    "about": "About",
+    "services": "Services",
+    "portfolio": "Portfolio",
+    "contact": "Contact",
+    "legal": "Legal",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "cookies": "Cookie Policy",
+    "rights": "© 2024 VERO. All rights reserved."
+  }
+}
+
+

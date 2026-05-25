@@ -1,10 +1,10 @@
 import Hero from '@/components/hero'
-import SectionHeader from '@/components/section-header'
 import NewsItem from '@/components/news-item'
 import VideoBackground from '@/components/video-background'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Search, Filter, Calendar } from 'lucide-react'
+import { Search, Filter } from 'lucide-react'
+import { isDatabaseEnabled, query } from '@/lib/database'
 
 // 뉴스 데이터 타입 정의
 interface NewsItem {
@@ -23,19 +23,22 @@ interface NewsItem {
   updated_at: string
 }
 
-// 뉴스 데이터 가져오기
+// 뉴스 데이터 가져오기 (DB 비활성 시 빈 목록, 활성 시 직접 쿼리)
 async function getNewsData(): Promise<NewsItem[]> {
+  if (!isDatabaseEnabled()) {
+    return []
+  }
+
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/news?published=true`, {
-      cache: 'no-store' // 실시간 데이터를 위해 캐시 비활성화
-    })
-    
-    if (!response.ok) {
-      throw new Error('뉴스 데이터를 가져올 수 없습니다')
-    }
-    
-    const data = await response.json()
-    return data.success ? data.data : []
+    const result = await query(
+      `SELECT id, title, slug, content, excerpt, thumbnail_url,
+              author, category, published, published_at, order_index, created_at, updated_at
+       FROM news
+       WHERE published = $1
+       ORDER BY order_index ASC, published_at DESC, created_at DESC`,
+      [true]
+    )
+    return result.rows as NewsItem[]
   } catch (error) {
     console.error('뉴스 데이터 로딩 오류:', error)
     return []

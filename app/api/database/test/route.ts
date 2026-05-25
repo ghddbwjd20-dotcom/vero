@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { testConnection, query } from '@/lib/database'
+import { isDatabaseEnabled, testConnection, query } from '@/lib/database'
 
-export async function GET(request: NextRequest) {
+export const dynamic = 'force-dynamic'
+
+export async function GET(_request: NextRequest) {
   try {
+    if (!isDatabaseEnabled()) {
+      return NextResponse.json({
+        success: true,
+        message: '데이터베이스 비활성화 (DATABASE_ENABLED 미설정)',
+        data: { connected: false, tables: [] },
+      })
+    }
+
     // 데이터베이스 연결 테스트
     const isConnected = await testConnection()
     

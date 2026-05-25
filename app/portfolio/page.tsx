@@ -1,10 +1,10 @@
 import Hero from '@/components/hero'
-import SectionHeader from '@/components/section-header'
 import PortfolioCard from '@/components/portfolio-card'
 import VideoBackground from '@/components/video-background'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Search, Filter, Calendar } from 'lucide-react'
+import { Search, Filter } from 'lucide-react'
+import { isDatabaseEnabled, query } from '@/lib/database'
 
 // 포트폴리오 데이터 타입 정의
 interface PortfolioItem {
@@ -27,19 +27,21 @@ interface PortfolioItem {
   updated_at: string
 }
 
-// 포트폴리오 데이터 가져오기
+// 포트폴리오 데이터 가져오기 (DB 비활성 시 빈 목록, 활성 시 직접 쿼리)
 async function getPortfolioData(): Promise<PortfolioItem[]> {
+  if (!isDatabaseEnabled()) {
+    return []
+  }
+
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/portfolio?published=true`, {
-      cache: 'no-store' // 실시간 데이터를 위해 캐시 비활성화
-    })
-    
-    if (!response.ok) {
-      throw new Error('포트폴리오 데이터를 가져올 수 없습니다')
-    }
-    
-    const data = await response.json()
-    return data.success ? data.data : []
+    const result = await query(
+      `SELECT id, title, slug, description, content, thumbnail_url, technologies,
+              client_name, project_url, github_url, start_date, end_date, status,
+              featured, order_index, created_at, updated_at
+       FROM portfolio
+       ORDER BY order_index ASC, created_at DESC`
+    )
+    return result.rows as PortfolioItem[]
   } catch (error) {
     console.error('포트폴리오 데이터 로딩 오류:', error)
     return []

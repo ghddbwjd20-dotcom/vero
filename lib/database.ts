@@ -1,4 +1,9 @@
-import { Pool, type PoolConfig } from 'pg'
+import { Pool, type PoolConfig, type QueryResult } from 'pg'
+
+/** DB 사용 시 .env에 DATABASE_ENABLED=true 설정 */
+export function isDatabaseEnabled(): boolean {
+  return process.env.DATABASE_ENABLED === 'true'
+}
 
 const poolDefaults = {
   max: 20,
@@ -26,39 +31,54 @@ function createPoolConfig(): PoolConfig {
   }
 }
 
-// PostgreSQL 연결 풀 생성 (DATABASE_URL 우선, 없으면 DB_HOST 등 개별 변수)
-const pool = new Pool(createPoolConfig())
+const pool = isDatabaseEnabled() ? new Pool(createPoolConfig()) : null
 
-// 연결 풀 이벤트 리스너
-pool.on('connect', () => {
-})
+if (pool) {
+  pool.on('error', (err) => {
+    console.error('❌ PostgreSQL 연결 오류:', err)
+  })
+}
 
-pool.on('error', (err) => {
-  console.error('❌ PostgreSQL 연결 오류:', err)
-})
+function emptyResult(text: string): QueryResult {
+  const sql = text.trim().toLowerCase()
+  if (sql.startsWith('insert') && sql.includes('returning')) {
+    return {
+      rows: [{ id: 0, created_at: new Date().toISOString() }],
+      rowCount: 1,
+      command: 'INSERT',
+      oid: 0,
+      fields: [],
+    }
+  }
+  return { rows: [], rowCount: 0, command: 'SELECT', oid: 0, fields: [] }
+}
 
-// 데이터베이스 쿼리 실행 함수
-export async function query(text: string, params?: any[]) {
-  const start = Date.now()
+export async function query(text: string, params?: any[]): Promise<QueryResult> {
+  if (!pool) {
+    return emptyResult(text)
+  }
+
   try {
-    const res = await pool.query(text, params)
-    const duration = Date.now() - start
-    return res
+    return await pool.query(text, params)
   } catch (error) {
     console.error('❌ 쿼리 오류:', error)
     throw error
   }
 }
 
-// 연결 풀 종료 함수
 export async function closePool() {
-  await pool.end()
+  if (pool) {
+    await pool.end()
+  }
 }
 
-// 데이터베이스 연결 테스트 함수
 export async function testConnection() {
+  if (!pool) {
+    return false
+  }
+
   try {
-    const result = await query('SELECT NOW() as current_time')
+    await query('SELECT NOW() as current_time')
     return true
   } catch (error) {
     console.error('❌ 데이터베이스 연결 테스트 실패:', error)

@@ -3,7 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
 import KakaoProvider from 'next-auth/providers/kakao'
 import NaverProvider from 'next-auth/providers/naver'
-import { query } from './database'
+import { isDatabaseEnabled, query } from './database'
 import bcrypt from 'bcryptjs'
 
 export const authOptions: NextAuthOptions = {
@@ -86,6 +86,9 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       // 소셜 로그인인 경우
       if (account?.provider && account.provider !== 'credentials') {
+        if (!isDatabaseEnabled()) {
+          return true
+        }
         try {
           // 기존 사용자 확인 (이메일 또는 provider_id로)
           const userEmail = user.email || `${(user.email?.split('@')[0] || user.name || 'user')}_${account.provider}@${account.provider}.local`
